@@ -7,7 +7,7 @@ namespace EOS.Attributes
     /// <remarks>
     /// 该方法不能是构造函数或者未定义所有类型的泛型方法。
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public sealed class EventCodeMethodAttribute : Attribute
     {
     }
@@ -20,12 +20,12 @@ namespace EOS.Attributes
     /// 和继承了<see cref="EventCodeMethodAttribute"/>特性的方法的<see cref="MethodInfo"/>，
     /// 定义了一个<see cref="EventCode"/>类实例。
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
     public sealed class EventCodeAttribute : Attribute
     {
     }
     /// <summary>注明该类不能作为<see cref="EventCodeAttribute"/>类型的继承。</summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
     public sealed class NoEventCodeClassAttribute : Attribute
     {
 

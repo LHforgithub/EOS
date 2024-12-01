@@ -98,7 +98,11 @@ namespace EOS
         public void AddNewCode(Type type)
         {
             _ = type ?? throw new ArgumentNullException(nameof(type));
-            var methodInfo = type?.GetMethods(ReflectionTools.AllNoGetSet).FirstOrDefault(m => m.GetCustomAttribute<EventCodeMethodAttribute>(true, true) is not null)
+            if (type.GetCustomAttribute<EventCodeAttribute>(true, true) is null)
+            {
+                throw new InvalidOperationException($"{nameof(AddNewCode)} : Type : {type} has not use an EventCodeAttribute.");
+            }
+            var methodInfo = type.GetMethods(ReflectionTools.AllNoGetSet).FirstOrDefault(m => m.GetCustomAttribute<EventCodeMethodAttribute>(true) is not null)
                 ?? throw new InvalidOperationException($"{nameof(AddNewCode)} : Cannot find a method define by attribute EventCodeMethod. Type : {type}");
             //检查是否为构造函数或泛型类型未完全定义的泛型方法
             if (methodInfo.IsConstructor)
