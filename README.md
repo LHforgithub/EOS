@@ -50,7 +50,7 @@ public interface TestInterface
 	void EventFunction_Define(int i, int nameInt = 10)
 }
 ```
-这相当于在程序集中存在一个以```typeof(TestInterface).AssemblyQualifiedName```为Key值的事件，这个事件会广播一个以```int, ref int```为参数的方法。
+这相当于在程序集中存在一个以```typeof(TestInterface).AssemblyQualifiedName```为Key值的事件，这个事件会广播一个以```int, int```为参数的方法。
 
 ***
 
