@@ -20,7 +20,7 @@ namespace EOS
 
         /// <summary>同时归属此<see cref="EOSControler"/>控制的<see cref="EOSControler"/>。
         /// 那些<see cref="EOSControler"/>的<see cref="MergeControlers"/>属性也应该有此<see cref="EOSControler"/>的实例。</summary>
-        private List<EOSControler> MergeControlers { get; } = new();
+        internal List<EOSControler> MergeControlers { get; } = new();
 
         /// <summary>事件与对应的事件委托</summary>
         internal Dictionary<EventCode, EOSDelegate> EventDelegatesDic { get; } = new();

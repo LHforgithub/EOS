@@ -79,7 +79,18 @@ namespace EOS
         /// <param name="assembly">对应的程序集</param>
         public static void SpliteFromSingleton(Assembly assembly)
         {
-            Instance.SingleControler?.Split(assembly);
+            if (Instance.SingleControler is null)
+            {
+                return;
+            }
+            if (Instance.SingleControler.ControlAssembly == assembly)
+            {
+                var newControl = Instance.SingleControler.MergeControlers.FirstOrDefault(x => x.ControlAssembly != assembly);
+                Instance.SingleControler.Destroy();
+                Instance.SingleControler = newControl;
+                return;
+            }
+            Instance.SingleControler.Split(assembly);
         }
         /// <summary>
         /// 获取对应程序集的事件控制器。
