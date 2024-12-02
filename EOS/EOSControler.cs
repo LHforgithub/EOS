@@ -429,7 +429,7 @@ namespace EOS
                         controler.Split(this);
                     }
                     MergeControlers.Clear();
-                    foreach (var eosDeleget in EventDelegatesDic.Values)
+                    foreach (var eosDeleget in new List<EOSDelegate>(EventDelegatesDic.Values))
                     {
                         eosDeleget.Clear();
                     }
@@ -451,7 +451,7 @@ namespace EOS
             var dic = new Dictionary<Type, Dictionary<EventCode, EOSMethodData>>(ListenerTypeCodeMethods);
             foreach (var item in new List<EOSControler>(MergeControlers))
             {
-                foreach (var dic2 in item.ListenerTypeCodeMethods)
+                foreach (var dic2 in new Dictionary<Type, Dictionary<EventCode, EOSMethodData>>(item.ListenerTypeCodeMethods))
                 {
                     if (dic.TryGetValue(dic2.Key, out var value))
                     {
