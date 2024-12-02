@@ -32,7 +32,7 @@ namespace EOS.Tools
         {
             if (originalFirst)
             {
-                foreach (var keyValuePair in mergeDic)
+                foreach (var keyValuePair in new Dictionary<TKey, TValue>(mergeDic))
                 {
                     if (originalDic.ContainsKey(keyValuePair.Key))
                     {
@@ -43,7 +43,7 @@ namespace EOS.Tools
             }
             else
             {
-                foreach (var keyValuePair in mergeDic)
+                foreach (var keyValuePair in new Dictionary<TKey, TValue>(mergeDic))
                 {
                     originalDic[keyValuePair.Key] = keyValuePair.Value;
                 }

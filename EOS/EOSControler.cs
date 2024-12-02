@@ -48,10 +48,13 @@ namespace EOS
                     throw new ArgumentException($"{nameof(AddNewCode)} : Key and CodeType cannot all be null or empty.");
                 }
             }
-            if (eventCode.CodeType is not null && !ControlAssembly.GetSuccessfullyLoadedTypes().Contains(eventCode.CodeType)
-                && !MergeControlers.Any(x => x.ControlAssembly.GetSuccessfullyLoadedTypes().Contains(eventCode.CodeType)))
+            var controler = this;
+            //获取类型对应程序集的控制者
+            if (eventCode.CodeType is not null)
             {
-                throw new ArgumentException($"{nameof(AddNewCode)} : This CodeType : {eventCode.CodeType} should not be add to this EOSControler.");
+                controler = (ControlAssembly.GetSuccessfullyLoadedTypes().Contains(eventCode.CodeType) ? this
+                : MergeControlers.FirstOrDefault(x => x.ControlAssembly.GetSuccessfullyLoadedTypes().Contains(eventCode.CodeType)))
+                ?? throw new InvalidOperationException($"{nameof(AddNewCode)} : This CodeType : {eventCode.CodeType} should not be add to this EOSControler.");
             }
             //事件码方法信息构造检查
             if (eventCode.Method is null)
@@ -79,7 +82,7 @@ namespace EOS
                 Controler = this,
                 Code = eventCode
             };
-            EventDelegatesDic.AddOrUpdata(eventCode, eosDelegate);
+            controler.EventDelegatesDic.AddOrUpdata(eventCode, eosDelegate);
         }
         /// <inheritdoc cref="AddNewCode(Type)"/>
         /// <typeparam name="T">泛型必须为继承了<see cref="IEventCode"/>接口的类型。</typeparam>
@@ -256,12 +259,13 @@ namespace EOS
             {
                 throw new InvalidOperationException($"{nameof(AddListener)} : Cannot use {(instance is null ? "Null" : instance)} with Type : {type} as an Event Listener. No method can be use as a delegate. Please cheak your class's EventListener attribute.");
             }
+            var eosDelegateDic = GetEOSDelegates();
             foreach (var code in codeMethodDic.Keys)
             {
-                if (!GetEOSDelegates().TryGetValue(code, out var eosDelegate))
+                if (!eosDelegateDic.TryGetValue(code, out var eosDelegate))
                 {
                     AddNewCode(code);
-                    eosDelegate = EventDelegatesDic[code];
+                    eosDelegate = GetEOSDelegate(code);
                 }
                 eosDelegate.Add(instance, codeMethodDic[code]);
             }
@@ -292,9 +296,10 @@ namespace EOS
             _ = type.GetCustomAttribute<EventListenerAttribute>(true, true) ??
                 throw new InvalidOperationException($"{nameof(RemoveListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
             var codeMethodDic = GetTypeEOSMethods(type);
+            var delegateDic = GetEOSDelegates();
             foreach (var code in codeMethodDic.Keys)
             {
-                if (!GetEOSDelegates().TryGetValue(code, out var eosDelegate))
+                if (!delegateDic.TryGetValue(code, out var eosDelegate))
                 {
                     continue;
                 }
@@ -321,9 +326,9 @@ namespace EOS
         /// <param name="key">要清空事件的事件码的<see cref="EventCode.Key"/>值</param>
         public void ClearListener(string key)
         {
-            if (!string.IsNullOrEmpty(key) && GetEOSDelegates().Keys.FirstOrDefault(x => x.Key == key) is EventCode code)
+            if (!string.IsNullOrEmpty(key) && GetEOSDelegate(key) is EOSDelegate del)
             {
-                EventDelegatesDic[code].Clear();
+                del.Clear();
             }
         }
         /// <inheritdoc cref=" ClearListener(string)"/>
