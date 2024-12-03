@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EOS", "EOS.csproj", "{FFA6E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EOSConsoleTest", "..\EOSConsoleTest\EOSConsoleTest.csproj", "{B43B6718-C704-40E1-88BC-EC3D30F7FEAB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EOSTestElseAssembly", "..\EOSTestElseAssembly\EOSTestElseAssembly.csproj", "{841CFEC7-1192-4BFC-9123-A898EEE56AB7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B43B6718-C704-40E1-88BC-EC3D30F7FEAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B43B6718-C704-40E1-88BC-EC3D30F7FEAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B43B6718-C704-40E1-88BC-EC3D30F7FEAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{841CFEC7-1192-4BFC-9123-A898EEE56AB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{841CFEC7-1192-4BFC-9123-A898EEE56AB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{841CFEC7-1192-4BFC-9123-A898EEE56AB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{841CFEC7-1192-4BFC-9123-A898EEE56AB7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

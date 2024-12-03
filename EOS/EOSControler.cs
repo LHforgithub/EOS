@@ -537,11 +537,17 @@ namespace EOS
                         TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] has a method that define a no EventCode EventListenerAttribute, Method Name : {method.Name}");
                         continue;
                     }
-                    var code = EOSManager.TryGetDefinedEventCode(eventListener.CodeType);
+                    var code = TryGetEventCode(eventListener.CodeType);
                     if (code is null)
                     {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use an undefined [EventCode : <{eventListener.CodeType}>].");
-                        continue;
+                        //对未加载的类型，尝试加载并自动合并。
+                        var newControler = EOSManager.GetNewControler(eventListener.CodeType.Assembly, new List<EOSControler>() { this });
+                        code = TryGetEventCode(eventListener.CodeType);
+                        if (code is null)
+                        {
+                            TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use an undefined [EventCode : <{eventListener.CodeType}>].");
+                            continue;
+                        }
                     }
                     if (codeDataDic.ContainsKey(code))
                     {
@@ -581,7 +587,7 @@ namespace EOS
         /// <returns>查询到的<see cref="EventCode"/>实例。如果未找到或输入为空，返回<see langword="null"/>。</returns>
         public EventCode TryGetEventCode(string key)
         {
-            return string.IsNullOrEmpty(key) ? null : EventDelegatesDic.Keys.FirstOrDefault(x => x.Key == key);
+            return string.IsNullOrEmpty(key) ? null : GetEOSDelegates().Keys.FirstOrDefault(x => x.Key == key);
         }
 
     }

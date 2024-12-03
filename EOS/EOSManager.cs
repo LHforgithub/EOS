@@ -55,13 +55,15 @@ namespace EOS
         /// <param name="assembly">要添加的程序集</param>
         public static void MergeToSingleton(Assembly assembly)
         {
-            var eosControler = GetNewControler(assembly);
+           
             if (Instance.SingleControler is null)
             {
+                var eosControler = GetNewControler(assembly);
                 Instance.SingleControler = eosControler;
             }
             else
             {
+                var eosControler = GetNewControler(assembly, new List<EOSControler>() { Instance.SingleControler });
                 Instance.SingleControler.Merge(eosControler);
             }
         }
@@ -98,16 +100,31 @@ namespace EOS
         /// 会自动解析所有由特性<see cref="EventListenerAttribute"/>标注的类和方法是否可以作为对应的事件接收者。
         /// </summary>
         /// <param name="assembly">要解析的程序集</param>
+        /// <param name="mergeConrolers">要同步合并的程序集</param>
         /// <returns>返回解析后的控制器。如果已解析过，返回之前解析的控制器实例。</returns>
-        public static EOSControler GetNewControler(Assembly assembly)
+        public static EOSControler GetNewControler(Assembly assembly, IEnumerable<EOSControler> mergeConrolers = null)
         {
             if (Instance.AssemblyControlerDic.TryGetValue(assembly, out var controler))
             {
+                if (mergeConrolers is not null)
+                {
+                    foreach (var c in mergeConrolers)
+                    {
+                        c.Merge(controler);
+                    }
+                }
                 return controler;
             }
             var eosControler = new EOSControler();
             eosControler.ControlAssembly = assembly;
             Instance.AssemblyControlerDic.AddOrUpdata(assembly, eosControler);
+            if (mergeConrolers is not null)
+            {
+                foreach (var c in mergeConrolers)
+                {
+                    c.Merge(eosControler);
+                }
+            }
             //所有类型获取
             var AllTypes = assembly.GetSuccessfullyLoadedTypes();
             //所有事件码获取
@@ -132,11 +149,11 @@ namespace EOS
             }
             return eosControler;
         }
-        /// <inheritdoc cref="GetNewControler(Assembly)"/>
-        public static EOSControler GetNewControler()
+        /// <inheritdoc cref="GetNewControler(Assembly, IEnumerable{EOSControler})"/>
+        public static EOSControler GetNewControler(IEnumerable<EOSControler> mergeConrolers = null)
         {
             Assembly assembly = new StackTrace().GetFrame(1).GetMethod().ReflectedType.Assembly;
-            return GetNewControler(assembly);
+            return GetNewControler(assembly, mergeConrolers);
         }
 
         /// <summary>
@@ -312,23 +329,23 @@ namespace EOS
 
 
 
-        /// <inheritdoc cref="EOSControler.TryGetEventCode(Type)"/>
-        /// <remarks>
-        /// 此函数搜索所有已加载程序集中的<see cref="EventCode"/>实例。
-        /// </remarks>
-        public static EventCode TryGetDefinedEventCode(Type type)
-        {
-            var dic = new List<EOSControler>(Instance.AssemblyControlerDic.Values);
-            foreach (var item in dic)
-            {
-                var result = item.TryGetEventCode(type);
-                if (result is not null)
-                {
-                    return result;
-                }
-            }
-            return null;
-        }
+        ///// <inheritdoc cref="EOSControler.TryGetEventCode(Type)"/>
+        ///// <remarks>
+        ///// 此函数搜索所有已加载程序集中的<see cref="EventCode"/>实例。
+        ///// </remarks>
+        //public static EventCode TryGetDefinedEventCode(Type type)
+        //{
+        //    var dic = new List<EOSControler>(Instance.AssemblyControlerDic.Values);
+        //    foreach (var item in dic)
+        //    {
+        //        var result = item.TryGetEventCode(type);
+        //        if (result is not null)
+        //        {
+        //            return result;
+        //        }
+        //    }
+        //    return null;
+        //}
 
 
 

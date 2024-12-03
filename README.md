@@ -171,7 +171,11 @@ public interface TestInterface
 
 包括对事件的添加、移除和广播等方法，控制对一个程序集的事件。通过[EOSManager](#eosmanager)中的```EOSManager.GetNewControler```方法获取。
 
-此类型中的大部分方法在遇到异常时会抛出，可能导致进程中断。
+可以将多个控制器合并。
+
+如果您在某个程序集中调用了另一个程序集中的事件，那么它们将会自动合并至一起。
+
+同时，此类型中的大部分方法在遇到异常时会抛出，可能导致进程中断。
 
 因此如无特殊需求，请尽量使用```EOSManager.MergeToSingleton```方法将控制器合并至单例控制器，然后调用[EOSManager](#eosmanager)中的静态方法。
 
