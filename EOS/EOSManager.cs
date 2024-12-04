@@ -248,7 +248,7 @@ namespace EOS
 
         /// <inheritdoc cref="EOSControler.ClearListener(string)"/>
         /// <remarks>此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>移除对象。</remarks>
-        public void ClearListener(string key)
+        public static void ClearListener(string key)
         {
             try
             {
@@ -260,17 +260,17 @@ namespace EOS
             }
         }
         /// <inheritdoc cref="EOSControler.ClearListener{T}()"/>
-        public void ClearListener<T>() where T : IEventCode
+        public static void ClearListener<T>() where T : IEventCode
         {
             ClearListener(typeof(T).AssemblyQualifiedName);
         }
         /// <inheritdoc cref="EOSControler.ClearListener(Type)"/>
-        public void ClearListener(Type type)
+        public static void ClearListener(Type type)
         {
             ClearListener(type.AssemblyQualifiedName);
         }
         /// <inheritdoc cref="EOSControler.ClearListener(EventCode)"/>
-        public void ClearListener(EventCode eventCode)
+        public static void ClearListener(EventCode eventCode)
         {
             ClearListener(eventCode.Key);
         }
