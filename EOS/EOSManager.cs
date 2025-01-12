@@ -40,7 +40,10 @@ namespace EOS
         public EOSControler SingleControler { get; internal set; }
         /// <summary></summary>
         public Dictionary<Assembly, EOSControler> AssemblyControlerDic { get; internal set; } = new();
-
+        /// <summary>
+        /// 当前单例控制器的当前触发事件的事件信息
+        /// </summary>
+        public static EventParams NowBroadCastParams => Instance.SingleControler?.NowBroadCastParams;
 
         /// <inheritdoc cref="MergeToSingleton(Assembly)"/>
         /// <remarks>无参数时使用调用该函数的域所处程序集。</remarks>
@@ -194,15 +197,6 @@ namespace EOS
                 TempLog.Log(ex.ToString());
             }
         }
-
-        /// <inheritdoc cref="EOSControler.AddListener{T}(T)" path="member/summary"/>
-        /// <inheritdoc cref="EOSControler.AddListener{T}(T)" path="member/param"/>
-        /// <inheritdoc cref="EOSControler.AddListener{T}(T)" path="member/typeparam"/>
-        /// <inheritdoc cref="AddListener(Type, object)" path="member/remarks"/>
-        public static void AddListener<T>(T instance) where T : IEventListener
-        {
-            AddListener(typeof(T), instance);
-        }
         /// <inheritdoc cref="EOSControler.AddListener(object)" path="member/summary"/>
         /// <inheritdoc cref="EOSControler.AddListener(object)" path="member/param"/>
         /// <inheritdoc cref="AddListener(Type, object)" path="member/remarks"/>
@@ -229,14 +223,6 @@ namespace EOS
             {
                 TempLog.Log(ex.ToString());
             }
-        }
-        /// <inheritdoc cref="EOSControler.RemoveListener{T}(T)" path="member/summary"/>
-        /// <inheritdoc cref="EOSControler.RemoveListener{T}(T)" path="member/param"/>
-        /// <inheritdoc cref="EOSControler.RemoveListener{T}(T)" path="member/typeparam"/>
-        /// <inheritdoc cref="RemoveListener(Type, object)" path="member/remarks"/>
-        public static void RemoveListener<T>(T instance) where T : IEventListener
-        {
-            RemoveListener(typeof(T), instance);
         }
         /// <inheritdoc cref="EOSControler.RemoveListener(object)" path="member/summary"/>
         /// <inheritdoc cref="EOSControler.RemoveListener(object)" path="member/param"/>

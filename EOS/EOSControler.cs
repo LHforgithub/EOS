@@ -270,14 +270,6 @@ namespace EOS
                 eosDelegate.Add(instance, codeMethodDic[code]);
             }
         }
-
-        /// <inheritdoc cref="AddListener(Type, object)"/>
-        /// <typeparam name="T">泛型必须是继承了<see cref="IEventListener"/>的类型。</typeparam>
-        public void AddListener<T>(T instance) where T : IEventListener
-        {
-            AddListener(typeof(T), instance);
-        }
-
         /// <inheritdoc cref="AddListener(Type, object)"/>
         /// <param name="notNullInstance">对象实例，不能为空。</param>
         public void AddListener(object notNullInstance)
@@ -307,12 +299,6 @@ namespace EOS
             }
         }
 
-        ///\<inheritdoc cref=" RemoveListener(Type, object)"/>
-        /// <typeparam name="T">泛型必须是继承了<see cref="IEventListener"/>的类型。</typeparam>
-        public void RemoveListener<T>(T instance) where T : IEventListener
-        {
-            RemoveListener(typeof(T), instance);
-        }
         /// <inheritdoc cref=" RemoveListener(Type, object)"/>
         /// <param name="notNullInstance">对象实例，不能为空。</param>
         public void RemoveListener(object notNullInstance)
