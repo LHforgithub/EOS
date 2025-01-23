@@ -8,7 +8,7 @@ namespace EOS.Tools
     /// <summary>
     /// 对部分方法的拓展使用
     /// </summary>
-    public static class Extentions
+    internal static class Extentions
     {
         /// <summary>
         /// 转换enum对象至int
