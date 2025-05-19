@@ -58,7 +58,6 @@ namespace EOS
         /// <param name="assembly">要添加的程序集</param>
         public static void MergeToSingleton(Assembly assembly)
         {
-           
             if (Instance.SingleControler is null)
             {
                 var eosControler = GetNewControler(assembly);
@@ -107,7 +106,7 @@ namespace EOS
         /// <returns>返回解析后的控制器。如果已解析过，返回之前解析的控制器实例。</returns>
         public static EOSControler GetNewControler(Assembly assembly, IEnumerable<EOSControler> mergeConrolers = null)
         {
-            if (Instance.AssemblyControlerDic.TryGetValue(assembly, out var controler))
+            if (Instance.AssemblyControlerDic.TryGetValue(assembly, out var controler) && !controler.IsDestroy)
             {
                 if (mergeConrolers is not null)
                 {

@@ -64,7 +64,7 @@ namespace EOS
                     throw new InvalidOperationException($"{nameof(AddNewCode)} : EventCode : {eventCode.Key} has not define a method.");
                 }
                 //可定义则定义新的事件方法信息
-                var dynamicMethod = new DynamicMethod(eventCode.Key, eventCode.ReturnType, eventCode.ParametersType.ToArray());
+                var dynamicMethod = new DynamicMethod(eventCode.Key + "_Method", eventCode.ReturnType, eventCode.ParametersType.ToArray());
                 eventCode.Method = dynamicMethod;
                 eventCode.Parameters = dynamicMethod.GetParameters().ToList();
             }
@@ -255,7 +255,7 @@ namespace EOS
             _ = type.GetCustomAttribute<EventListenerAttribute>(true, true) ??
                 throw new InvalidOperationException($"{nameof(AddListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
             var codeMethodDic = GetTypeEOSMethods(type);
-            if (codeMethodDic.Keys.Count < 1)
+            if (codeMethodDic.Count < 1)
             {
                 throw new InvalidOperationException($"{nameof(AddListener)} : Cannot use {(instance is null ? "Null" : instance)} with Type : {type} as an Event Listener. No method can be use as a delegate. Please cheak your class's EventListener attribute.");
             }
@@ -425,6 +425,7 @@ namespace EOS
                         eosDeleget.Clear();
                     }
                     ListenerTypeCodeMethods.Clear();
+                    EOSManager.Instance.AssemblyControlerDic.Remove(ControlAssembly);
                     ControlAssembly = null;
                 });
             }
