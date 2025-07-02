@@ -559,6 +559,12 @@ namespace EOS
             {
                 ListenerTypeCodeMethods.AddOrUpdata(type, codeDataDic);
             }
+            //获取此类型中的嵌套类型并将其中的事件加入控制集
+            var nestedTypes = type.GetNestedTypes(true);
+            foreach (var nestedType in nestedTypes)
+            {
+                SearchTypeCodeDataDic(nestedType);
+            }
         }
 
 

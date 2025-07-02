@@ -24,6 +24,9 @@ namespace EOS.Tools
         /// <inheritdoc cref="ReflectionTools.GetCustomAttribute{T}(MemberInfo, bool, bool)"/>
         public static T GetCustomAttribute<T>(this MemberInfo memberInfo, bool inherit, bool inheritFromInterface) where T : Attribute => ReflectionTools.GetCustomAttribute<T>(memberInfo, inherit, inheritFromInterface);
 
+        /// <inheritdoc cref="ReflectionTools.GetNestedTypes(Type, bool)"/>
+        public static Type[] GetNestedTypes(this Type type, bool recursion) => ReflectionTools.GetNestedTypes(type, recursion);
+
         /// <inheritdoc cref="ReflectionTools.IsInheritedBy(MemberInfo, MemberInfo)"/>
         public static bool IsInheritedBy(this MemberInfo original, MemberInfo other) => ReflectionTools.IsInheritedBy(original, other);
 

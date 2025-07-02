@@ -178,7 +178,32 @@ namespace EOS.Tools
             return memberInfo.GetCustomAttribute<T>(true);
         }
 
-
+        /// <summary>
+        /// 获取指定类型<see cref="Type"/>的所有嵌套类型。
+        /// </summary>
+        /// <param name="type">要检索嵌套类型的类型。</param>
+        /// <param name="recursion">是否递归获取所有层级的嵌套类型。</param>
+        /// <returns>嵌套类型数组。如果<paramref name="type"/>为null，则返回空数组。</returns>
+        public static Type[] GetNestedTypes(Type type, bool recursion)
+        {
+            if (type == null)
+            {
+                return Array.Empty<Type>();
+            }
+            if (recursion)
+            {
+                var result = new List<Type>();
+                var nesteds = type.GetNestedTypes(AllDeclared);
+                result.AddRange(nesteds);
+                foreach (var nested in nesteds)
+                {
+                    result.AddRange(GetNestedTypes(nested, true));
+                }
+                return result.Distinct().ToArray();
+            }
+            else
+                return type.GetNestedTypes(AllDeclared);
+        }
 
         /// <summary>
         /// 判断一个<see cref="MemberInfo"/>是否继承自另一个<see cref="MemberInfo"/>。
