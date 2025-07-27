@@ -8,6 +8,7 @@ namespace EOS.Tiles
         public Guid GUID = Guid.NewGuid();
         public EOSMethodData Data { get; set; }
         public object TargetObject { get; set; } = null;
+        public int LayerPriority { get; set; } = 0;
         public Type TagrtObjectType
         {
             get
@@ -38,7 +39,7 @@ namespace EOS.Tiles
             {
                 throw new ArgumentNullException(nameof(other));
             }
-            return -Data.Priority.CompareTo(other.Data.Priority);
+            return (-Data.Priority - LayerPriority).CompareTo(-other.Data.Priority - other.LayerPriority);
         }
         public override string ToString()
         {

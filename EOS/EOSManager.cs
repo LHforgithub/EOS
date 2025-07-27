@@ -261,6 +261,24 @@ namespace EOS
         }
 
 
+        /// <inheritdoc cref="EOSControler.SetListenerLayerProperty(int, Type, object)"/>
+        /// <remarks>此方法在<see cref="EOSManager"/>中的<see cref="SingleControler"/>中设置层级优先级。</remarks>
+        public void SetListenerLayerProperty(int layerProperty, Type type, object instance = null)
+        {
+            try
+            {
+                Instance.SingleControler.SetListenerLayerProperty(layerProperty, type, instance);
+            }
+            catch (Exception ex)
+            {
+                TempLog.Log(ex.ToString());
+            }
+        }
+        /// <inheritdoc cref="SetListenerLayerProperty(int, Type, object)"/>
+        public void SetListenerLayerProperty(object notNullInstance, int layerProperty)
+        {
+            SetListenerLayerProperty(layerProperty, notNullInstance?.GetType(), notNullInstance);
+        }
 
 
         /// <inheritdoc cref="EOSControler.BroadCast(string, object[])" path="member/summary"/>

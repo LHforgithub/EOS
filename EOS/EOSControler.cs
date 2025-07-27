@@ -336,6 +336,40 @@ namespace EOS
             ClearListener(eventCode.Key);
         }
 
+        /// <summary>
+        /// 设置事件监听器实例的方法所在层级优先级属性。
+        /// </summary>
+        /// <param name="type">类型必须是继承了<see cref="EventListenerAttribute"/>特性的类型，否则会抛出<see cref="InvalidOperationException"/>异常。</param>
+        /// <param name="instance">对象实例。如果为<see langword="null"/>，则类型必须是静态类型。</param>
+        /// <param name="layerProperty">要设置的层级优先级属性值。值越小，优先级越小，越后被调用。</param>
+        /// <exception cref="ArgumentNullException"/>
+        /// <exception cref="InvalidOperationException"/>
+        public void SetListenerLayerProperty(int layerProperty, Type type, object instance = null)
+        {
+            _ = type ?? throw new ArgumentNullException(nameof(type));
+            _ = type.GetCustomAttribute<EventListenerAttribute>(true, true) ??
+                throw new InvalidOperationException($"{nameof(RemoveListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
+            var codeMethodDic = GetTypeEOSMethods(type);
+            var delegateDic = GetEOSDelegates();
+            foreach (var code in codeMethodDic.Keys)
+            {
+                if (!delegateDic.TryGetValue(code, out var eosDelegate))
+                {
+                    continue;
+                }
+                var method = eosDelegate.GetInstanceMethod(instance);
+                if (method != null)
+                {
+                    method.LayerPriority = layerProperty;
+                }
+            }
+        }
+        /// <inheritdoc cref="SetListenerLayerProperty(int, Type, object)"/>
+        public void SetListenerLayerProperty(object notNullInstance, int layerProperty)
+        {
+            SetListenerLayerProperty(layerProperty, notNullInstance?.GetType(), notNullInstance);
+        }
+
         /// <summary> 广播事件。 </summary>
         /// <param name="key">必须为非空字符串，否则会抛出<see cref="ArgumentException"/>异常。</param>
         /// <param name="values">

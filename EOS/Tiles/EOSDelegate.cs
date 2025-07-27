@@ -44,7 +44,14 @@ namespace EOS.Tiles
                 InstanceDelegateQueue.Remove(instance);
             }
         }
-
+        public EOSMethod GetInstanceMethod(object instance)
+        {
+            if (instance != null && InstanceDelegateQueue.TryGetValue(instance, out var method))
+            {
+                return method;
+            }
+            return null;
+        }
         public void Invoke(params object[] values)
         {
             var list = new List<EOSMethod>(InstanceDelegateQueue.Values);

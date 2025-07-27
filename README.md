@@ -9,13 +9,18 @@
 ***
 ## **核心类型：**
 
-- [EventCodeAttribute](#eventcodeattribute)
-- [EventCodeMethodAttribute](#eventcodemethodattribute)
-- [EventListenerAttribute](#eventlistenerattribute)
-- [EOSManager](#eosmanager)
-- [EOSControler](#eoscontroler)
-- [IEventCode](#ieventcode)
-- [IEventListener](#ieventlistener)
+- [**EOS 事件系统模块**](#eos-事件系统模块)
+				- [***目标框架：.Net Framework 4.8.1***](#目标框架net-framework-481)
+					- [也可以通过修改源代码目标框架来获得更低版本，但可能会有语法问题。理论最低需要 .Net Framework 4.5](#也可以通过修改源代码目标框架来获得更低版本但可能会有语法问题理论最低需要-net-framework-45)
+	- [**核心类型：**](#核心类型)
+		- [EventCodeAttribute](#eventcodeattribute)
+		- [EventCodeMethodAttribute](#eventcodemethodattribute)
+		- [EventListenerAttribute](#eventlistenerattribute)
+		- [EOSManager](#eosmanager)
+			- [详见文档注释中以下方法注释：](#详见文档注释中以下方法注释)
+		- [EOSControler](#eoscontroler)
+		- [IEventCode](#ieventcode)
+		- [IEventListener](#ieventlistener)
 
 **更多类型**
 
@@ -152,7 +157,7 @@ public interface TestInterface
 
 >一个单例，用于获取程序集的[EOSControler](#eoscontroler)类型，或者直接将[EOSControler](#eoscontroler)添加到控制器单例中。
 
-#### 详见文档注释中以下方法注释：
+#### 详见文档注释中以下方法注释
 
 - ```MergeToSingleton()```
 - ```MergeToSingleton(Assembly)```
