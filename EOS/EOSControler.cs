@@ -595,71 +595,7 @@ namespace EOS
             return new Dictionary<EventCode, EOSMethodData>();
         }
 
-        /// <summary>加载对应类型的事件码对应的方法。</summary>
-        internal void SearchTypeCodeDataDic(Type type)
-        {
-            var codeDataDic = new Dictionary<EventCode, EOSMethodData>();
-            var methodInfos = type.GetNotGetSetMethods();
-            foreach (var method in methodInfos)
-            {
-                if (method.IsConstructorOrGeneric())
-                {
-                    continue;
-                }
-                if (method.GetCustomAttribute<EventListenerAttribute>(true, true) is EventListenerAttribute eventListener)
-                {
-                    if (eventListener.CodeType is null ||
-                        eventListener.CodeType.GetCustomAttribute<EventCodeAttribute>(true, true) is not EventCodeAttribute eventCodeAttribute)
-                    {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] has a method that define a no EventCode EventListenerAttribute, Method Name : {method.Name}");
-                        continue;
-                    }
-                    var code = TryGetEventCode(eventListener.CodeType);
-                    if (code is null)
-                    {
-                        //对未加载的类型，尝试加载并自动合并。
-                        //var newControler = EOSManager.GetNewControler(eventListener.CodeType.Assembly, new List<EOSControler>() { this });
-                        //code = TryGetEventCode(eventListener.CodeType);
-                        //if (code is null)
-                        //{
-                        //    TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use an undefined [EventCode : <{eventListener.CodeType}>].");
-                        //    continue;
-                        //}
-
-                        //未加载类型无法使用，记录日志并跳过。
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use an undefined [EventCode : <{eventListener.CodeType}>].");
-                        continue;
-                    }
-                    if (codeDataDic.ContainsKey(code))
-                    {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use multiple [EventCode : <{eventListener.CodeType}>]. " +
-                            $"There's already a method use this Code!");
-                        continue;
-                    }
-                    if (!method.IsParamsAndReturnEquelsWith(code.Method))
-                    {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] has different parameters or returnType with [EventCode : <{eventListener.CodeType}>]. " +
-                           $"Please maintain consistency!");
-                        continue;
-                    }
-                    var methodData = new EOSMethodData(
-                        methodInfo: method,
-                        priority: method.GetCustomAttribute<EventPriorityAttribute>(true, true)?.Priority ?? (int)Priority.Normal
-                        );
-                    codeDataDic.Add(code, methodData);
-                }
-            }
-            if (codeDataDic.Count > 0)
-            {
-                ListenerTypeCodeMethods.AddOrUpdata(type, codeDataDic);
-            }
-            //获取此类型中的嵌套类型并将其中的事件加入控制集
-            var nestedTypes = type.GetNestedTypes(true);
-            foreach (var nestedType in nestedTypes)
-            {
-                SearchTypeCodeDataDic(nestedType);
-            }
-        }
+        
 
 
 
