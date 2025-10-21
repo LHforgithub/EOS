@@ -91,6 +91,7 @@ namespace EOS
             {
                 var newControl = Instance.SingleControler.MergeControlers.FirstOrDefault(x => x.ControlAssembly != assembly);
                 Instance.SingleControler.Destroy();
+                Instance.AssemblyControlerDic.Remove(assembly);
                 Instance.SingleControler = newControl;
                 return;
             }
@@ -183,7 +184,7 @@ namespace EOS
         /// <inheritdoc cref="EOSControler.AddListener(Type, object)" path="member/param"/>
         /// <remarks>
         /// 此方法向<see cref="EOSManager"/>中的<see cref="SingleControler"/>添加对象。
-        /// <para>此静态方法不会抛出异常。</para>
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
         /// </remarks>
         public static void AddListener(Type type, object instance = null)
         {
@@ -204,13 +205,30 @@ namespace EOS
             AddListener(notNullInstance?.GetType(), notNullInstance);
         }
 
-
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/summary"/>
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/typeparam"/>
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/param"/>
+        /// <remarks>
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/remarks"/>
+        /// <para><inheritdoc cref="AddListener(Type, object)" path="member/remarks"/></para>
+        /// </remarks>
+        public static void AddListener<T>(object notNullInstance, string methodName = "", Type[] parameterTypes = null)
+        {
+            try
+            {
+                Instance.SingleControler.AddListener<T>(notNullInstance, methodName, parameterTypes);
+            }
+            catch (Exception ex)
+            {
+                TempLog.Log(ex.ToString());
+            }
+        }
 
         /// <inheritdoc cref="EOSControler.RemoveListener(Type, object)" path="member/summary"/>
         /// <inheritdoc cref="EOSControler.RemoveListener(Type, object)" path="member/param"/>
         /// <remarks>
         /// 此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>移除对象。
-        /// <para>此静态方法不会抛出异常。</para>
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
         /// </remarks>
         public static void RemoveListener(Type type, object instance = null)
         {
@@ -229,6 +247,25 @@ namespace EOS
         public static void RemoveListener(object notNullInstance)
         {
             RemoveListener(notNullInstance?.GetType(), notNullInstance);
+        }
+
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/summary"/>
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/typeparam"/>
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/param"/>
+        /// <remarks>
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/remarks"/>
+        /// <para><inheritdoc cref="RemoveListener(Type, object)" path="member/remarks"/></para>
+        /// </remarks>
+        public static void RemoveListener<T>(object notNullInstance)
+        {
+            try
+            {
+                Instance.SingleControler.RemoveListener<T>(notNullInstance);
+            }
+            catch (Exception ex)
+            {
+                TempLog.Log(ex.ToString());
+            }
         }
 
         /// <inheritdoc cref="EOSControler.ClearListener(string)"/>
@@ -322,7 +359,7 @@ namespace EOS
         /// 此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>广播事件。
         /// <para>此静态方法不会抛出异常。</para>
         /// </remarks>
-        public static void BroadCast<T>(params object[] values) where T : IEventCode
+        public static void BroadCast<T>(params object[] values)
         {
             BroadCast(typeof(T).AssemblyQualifiedName, values);
         }
