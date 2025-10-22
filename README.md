@@ -203,7 +203,7 @@ public class TestClass
 
 必须继承该接口才能将类型作为[EOSManager](#eosmanager)或[EOSControler](#eoscontroler)中[EventListener](#eventlistenerattribute)相关方法的泛型参数。
 
->注意，继承该接口的类被继承时，子类也会被作为事件码使用，并可能会因为缺少[EventCodeMethodAttribute](#eventcodemethodattribute)特性而报错。这与单独使用[EventCodeAttribute](#eventcodeattribute)特性不同，[EventCodeAttribute](#eventcodeattribute)特性不会被继承。
+>注意，与单独使用[EventCodeAttribute](#eventcodeattribute)特性不同，[EventCodeAttribute](#eventcodeattribute)特性不会被继承，而继承了此接口的类，会自动作为事件码使用，并可能会因为缺少[EventCodeMethodAttribute](#eventcodemethodattribute)特性而报错。但是，继承该类型的子类**不会**被作为事件码使用。
 
 ***
 
