@@ -1,4 +1,4 @@
-﻿using EOS.Attributes;
+using EOS.Attributes;
 using EOS.Tiles;
 using EOS.Tools;
 using System;
@@ -458,14 +458,15 @@ namespace EOS
         /// <summary>检查类型是否可以被视为定义了一个<see cref="EventCode"/>实例。</summary>
         public static bool IsCanUseAsEventCode(Type type)
         {
-            return type?.GetCustomAttribute<EventCodeAttribute>(true, true) is not null
+            return (type?.GetCustomAttribute<EventCodeAttribute>(false, false) is not null
+                || type?.GetInterface(nameof(IEventCode)) is not null)
                 && type.GetCustomAttribute<NoEventCodeClassAttribute>(true, true) is null;
         }
         /// <summary>检查类型是否可以作为事件的接收者。</summary>
         public static bool IsListener(Type type)
         {
             return type?.GetCustomAttribute<EventListenerAttribute>(true, true) is not null
-                && type.IsClass && type.IsVisible;
+                && type.IsClass && !type.IsAbstract && !type.IsGenericType && type.IsVisible;
         }
 
 
