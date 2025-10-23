@@ -100,7 +100,7 @@ public interface TestInterface
 
 >用作注明类型可为事件的接收者。可以用于类、接口和方法。类应当是公开的
 
-添加至类或接口后，即为声明该类、继承该类的类型或继承该接口的类可以作为事件的具体接收者，调用对应方法。
+EventListenerAttribute可以被继承。添加至类或接口后，即为声明该类、继承该类的类型或继承该接口的类可以作为事件的具体接收者，调用对应方法。
 
 >可以添加至静态类上。此时，可以将该静态类作为泛型参数调用[EOSManager](#eosmanager)或[EOSControler](#eoscontroler)中的相关方法。
 
@@ -212,5 +212,6 @@ public class TestClass
 >一个继承了[EventListenerAttribute](#eventlistenerattribute)类型的接口
 
 必须继承该接口才能将类型作为[EOSManager](#eosmanager)或[EOSControler](#eoscontroler)中[EventListener](#eventlistenerattribute)相关方法的泛型参数。
+
 
 ***
