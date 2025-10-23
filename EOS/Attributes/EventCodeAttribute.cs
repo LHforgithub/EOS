@@ -5,7 +5,7 @@ namespace EOS.Attributes
 {
     /// <summary>用于继承了<see cref="EventCodeAttribute"/>特性的类中的方法，注明该方法为该<see cref="EventCode"/>中的<see cref="EventCode.Method"/></summary>
     /// <remarks>
-    /// 该方法不能是构造函数或者未定义所有类型的泛型方法。
+    /// 该方法不能是构造函数、属性的Get或Set方法，或者未定义所有类型的泛型方法。
     /// </remarks>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public sealed class EventCodeMethodAttribute : Attribute
