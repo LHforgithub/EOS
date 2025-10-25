@@ -1,4 +1,4 @@
-﻿using EOS.Attributes;
+using EOS.Attributes;
 using EOS.Tiles;
 using EOS.Tools;
 using System;
@@ -60,13 +60,11 @@ namespace EOS
         {
             if (Instance.SingleControler is null)
             {
-                var eosControler = GetNewControler(assembly);
-                Instance.SingleControler = eosControler;
+                Instance.SingleControler = GetNewControler(assembly);
             }
             else
             {
-                var eosControler = GetNewControler(assembly, new List<EOSControler>() { Instance.SingleControler });
-                Instance.SingleControler.Merge(eosControler);
+                GetNewControler(assembly, new List<EOSControler>() { Instance.SingleControler });
             }
         }
 
@@ -91,6 +89,7 @@ namespace EOS
             {
                 var newControl = Instance.SingleControler.MergeControlers.FirstOrDefault(x => x.ControlAssembly != assembly);
                 Instance.SingleControler.Destroy();
+                Instance.AssemblyControlerDic.Remove(assembly);
                 Instance.SingleControler = newControl;
                 return;
             }
@@ -147,7 +146,7 @@ namespace EOS
             var listenerTypeList = AllTypes.Where(t => IsListener(t));
             foreach (var type in listenerTypeList)
             {
-                eosControler.SearchTypeCodeDataDic(type);
+                SearchTypeCodeDataDic(eosControler, type);
             }
             return eosControler;
         }
@@ -156,6 +155,74 @@ namespace EOS
         {
             Assembly assembly = new StackTrace().GetFrame(1).GetMethod().ReflectedType.Assembly;
             return GetNewControler(assembly, mergeConrolers);
+        }
+
+        /// <summary>加载对应类型的事件码对应的方法。</summary>
+        internal static void SearchTypeCodeDataDic(EOSControler eosControler, Type type)
+        {
+            var codeDataDic = new Dictionary<EventCode, EOSMethodData>();
+            var methodInfos = type.GetNotGetSetMethods();
+            foreach (var method in methodInfos)
+            {
+                if (method.IsConstructorOrGeneric())
+                {
+                    continue;
+                }
+                if (method.GetCustomAttribute<EventListenerAttribute>(true, true) is EventListenerAttribute eventListener)
+                {
+                    if (eventListener.CodeType is null ||
+                        eventListener.CodeType.GetCustomAttribute<EventCodeAttribute>(true, true) is not EventCodeAttribute eventCodeAttribute)
+                    {
+                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] has a method that define a no EventCode EventListenerAttribute, Method Name : {method.Name}");
+                        continue;
+                    }
+                    var code = eosControler.TryGetEventCode(eventListener.CodeType);
+                    if (code is null)
+                    {
+                        //对未加载的类型，如果该程序集已和单例控制器合并，则尝试加载并自动合并。
+                        if (eosControler.MergeControlers.Any(x => x == Instance.SingleControler))
+                        {
+                            var newControler = GetNewControler(eventListener.CodeType.Assembly, new List<EOSControler>() { eosControler });
+                            code = eosControler.TryGetEventCode(eventListener.CodeType);
+                            if (code is null)
+                            {
+                                TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use an undefined [EventCode : <{eventListener.CodeType}>].");
+                                continue;
+                            }
+                        }
+                        //否则，未加载类型无法使用，记录日志并跳过。
+                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use an undefined [EventCode : <{eventListener.CodeType}>].");
+                        continue;
+                    }
+                    if (codeDataDic.ContainsKey(code))
+                    {
+                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use multiple [EventCode : <{eventListener.CodeType}>]. " +
+                            $"There's already a method use this Code!");
+                        continue;
+                    }
+                    if (!method.IsParamsAndReturnEquelsWith(code.Method))
+                    {
+                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] has different parameters or returnType with [EventCode : <{eventListener.CodeType}>]. " +
+                           $"Please maintain consistency!");
+                        continue;
+                    }
+                    var methodData = new EOSMethodData(
+                        methodInfo: method,
+                        priority: method.GetCustomAttribute<EventPriorityAttribute>(true, true)?.Priority ?? (int)Priority.Normal
+                        );
+                    codeDataDic.Add(code, methodData);
+                }
+            }
+            if (codeDataDic.Count > 0)
+            {
+                eosControler.ListenerTypeCodeMethods.AddOrUpdata(type, codeDataDic);
+            }
+            //获取此类型中的嵌套类型并将其中的事件加入控制集
+            var nestedTypes = type.GetNestedTypes(true);
+            foreach (var nestedType in nestedTypes)
+            {
+                SearchTypeCodeDataDic(eosControler, nestedType);
+            }
         }
 
         /// <summary>
@@ -183,7 +250,7 @@ namespace EOS
         /// <inheritdoc cref="EOSControler.AddListener(Type, object)" path="member/param"/>
         /// <remarks>
         /// 此方法向<see cref="EOSManager"/>中的<see cref="SingleControler"/>添加对象。
-        /// <para>此静态方法不会抛出异常。</para>
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
         /// </remarks>
         public static void AddListener(Type type, object instance = null)
         {
@@ -204,13 +271,30 @@ namespace EOS
             AddListener(notNullInstance?.GetType(), notNullInstance);
         }
 
-
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/summary"/>
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/typeparam"/>
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/param"/>
+        /// <remarks>
+        /// <inheritdoc cref="EOSControler.AddListener{T}" path="member/remarks"/>
+        /// <para><inheritdoc cref="AddListener(Type, object)" path="member/remarks"/></para>
+        /// </remarks>
+        public static void AddListener<T>(object notNullInstance, string methodName = "", Type[] parameterTypes = null)
+        {
+            try
+            {
+                Instance.SingleControler.AddListener<T>(notNullInstance, methodName, parameterTypes);
+            }
+            catch (Exception ex)
+            {
+                TempLog.Log(ex.ToString());
+            }
+        }
 
         /// <inheritdoc cref="EOSControler.RemoveListener(Type, object)" path="member/summary"/>
         /// <inheritdoc cref="EOSControler.RemoveListener(Type, object)" path="member/param"/>
         /// <remarks>
         /// 此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>移除对象。
-        /// <para>此静态方法不会抛出异常。</para>
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
         /// </remarks>
         public static void RemoveListener(Type type, object instance = null)
         {
@@ -229,6 +313,25 @@ namespace EOS
         public static void RemoveListener(object notNullInstance)
         {
             RemoveListener(notNullInstance?.GetType(), notNullInstance);
+        }
+
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/summary"/>
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/typeparam"/>
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/param"/>
+        /// <remarks>
+        /// <inheritdoc cref="EOSControler.RemoveListener{T}" path="member/remarks"/>
+        /// <para><inheritdoc cref="RemoveListener(Type, object)" path="member/remarks"/></para>
+        /// </remarks>
+        public static void RemoveListener<T>(object notNullInstance)
+        {
+            try
+            {
+                Instance.SingleControler.RemoveListener<T>(notNullInstance);
+            }
+            catch (Exception ex)
+            {
+                TempLog.Log(ex.ToString());
+            }
         }
 
         /// <inheritdoc cref="EOSControler.ClearListener(string)"/>
@@ -322,7 +425,7 @@ namespace EOS
         /// 此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>广播事件。
         /// <para>此静态方法不会抛出异常。</para>
         /// </remarks>
-        public static void BroadCast<T>(params object[] values) where T : IEventCode
+        public static void BroadCast<T>(params object[] values)
         {
             BroadCast(typeof(T).AssemblyQualifiedName, values);
         }
@@ -355,14 +458,15 @@ namespace EOS
         /// <summary>检查类型是否可以被视为定义了一个<see cref="EventCode"/>实例。</summary>
         public static bool IsCanUseAsEventCode(Type type)
         {
-            return type?.GetCustomAttribute<EventCodeAttribute>(true, true) is not null
+            return (type?.GetCustomAttribute<EventCodeAttribute>(false, false) is not null
+                || type?.GetInterface(nameof(IEventCode)) is not null)
                 && type.GetCustomAttribute<NoEventCodeClassAttribute>(true, true) is null;
         }
         /// <summary>检查类型是否可以作为事件的接收者。</summary>
         public static bool IsListener(Type type)
         {
             return type?.GetCustomAttribute<EventListenerAttribute>(true, true) is not null
-                && type.IsClass && type.IsVisible;
+                && type.IsClass && !type.IsAbstract && !type.IsGenericType && type.IsVisible;
         }
 
 

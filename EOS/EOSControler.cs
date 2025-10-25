@@ -1,4 +1,4 @@
-﻿using EOS.Attributes;
+using EOS.Attributes;
 using EOS.Tiles;
 using EOS.Tools;
 using System;
@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading.Tasks;
+//using System.Threading.Tasks;
 
 
 namespace EOS
@@ -85,13 +85,13 @@ namespace EOS
             controler.EventDelegatesDic.AddOrUpdata(eventCode, eosDelegate);
         }
         /// <inheritdoc cref="AddNewCode(Type)"/>
-        /// <typeparam name="T">泛型必须为继承了<see cref="IEventCode"/>接口的类型。</typeparam>
-        public void AddNewCode<T>() where T : IEventCode
+        /// <typeparam name="T">泛型必须为继承了<see cref="IEventCode"/>接口的类型，或使用了<see cref="EventCodeAttribute"/>特性的类型的类型。</typeparam>
+        public void AddNewCode<T>()
         {
             AddNewCode(typeof(T));
         }
         /// <inheritdoc cref="AddNewCode(EventCode)"/>
-        /// <param name="type">必须为继承了<see cref="EventCodeAttribute"/>特性的类型。</param>
+        /// <param name="type">必须为使用了<see cref="EventCodeAttribute"/>特性的类型。</param>
         /// <remarks>
         /// 使用的类型中，必须同时包含至少一个继承了<see cref="EventCodeMethodAttribute"/>特性的方法。
         /// 当有多个继承的方法时，使用找到的第一个方法作为该事件码的方法信息。
@@ -108,13 +108,9 @@ namespace EOS
             var methodInfo = type.GetMethods(ReflectionTools.AllNoGetSet).FirstOrDefault(m => m.GetCustomAttribute<EventCodeMethodAttribute>(true) is not null)
                 ?? throw new InvalidOperationException($"{nameof(AddNewCode)} : Cannot find a method define by attribute EventCodeMethod. Type : {type}");
             //检查是否为构造函数或泛型类型未完全定义的泛型方法
-            if (methodInfo.IsConstructor)
+            if (methodInfo.IsConstructorOrGeneric())
             {
-                throw new InvalidOperationException($"{nameof(AddNewCode)} : Cannot use a constructor method to be an EventMethod. Type : {type}, Method : {methodInfo.Name}.");
-            }
-            if (methodInfo.IsGenericMethod && methodInfo.ContainsGenericParameters)
-            {
-                throw new InvalidOperationException($"{nameof(AddNewCode)} : Cannot use a generic method to be an EventMethod. Type : {type}, Method : {methodInfo.Name}.");
+                throw new InvalidOperationException($"{nameof(AddNewCode)} : Cannot use a constructor or generic method to be an EventMethod. Type : {type}, Method : {methodInfo.Name}.");
             }
             var eventCode = new EventCode()
             {
@@ -243,10 +239,10 @@ namespace EOS
         /// <summary>
         /// 添加事件接收对象实例，或静态类中的方法。
         /// 对于相同的实例对象，不会重复添加。
+        /// <para>如果无法添加方法，此方法会抛出异常，可能中断程序。</para>
         /// </summary>
         /// <param name="type">类型必须是继承了<see cref="EventListenerAttribute"/>特性的类型。</param>
         /// <param name="instance">对象实例。如果为<see langword="null"/>，则类型必须是静态类型。</param>
-        /// <remarks>如果无法添加方法，此方法会抛出异常，可能中断程序。</remarks>
         /// <exception cref="ArgumentNullException"/>
         /// <exception cref="InvalidOperationException"/>
         public void AddListener(Type type, object instance = null)
@@ -277,6 +273,53 @@ namespace EOS
             AddListener(notNullInstance?.GetType(), notNullInstance);
         }
 
+        /// <inheritdoc cref="AddListener(Type, object)"/>
+        /// <typeparam name="T">使用或继承了<see cref="EventListenerAttribute"/>的类。</typeparam>
+        /// <param name="notNullInstance">对象实例，不能为空。</param>
+        /// <param name="methodName">方法名，在对象实例已存在对应于<typeparamref name="T"/>的事件方法（即定义了<see cref="EventListenerAttribute"/>特性，参数为<see langword="typeof(T)"/>的方法）的情况下，该项可以为空。</param>
+        /// <param name="parameterTypes">方法重载的参数类型。</param>
+        /// <remarks>该方法用于在运行时，将实例的单个方法添加至以使用了<see cref="EventCodeAttribute"/>特性的<typeparamref name="T"/>类型作为<see cref="EventCode"/>的事件中，而不是一次性将该类型的所有事件方法添加至事件中（即动态绑定）。</remarks>
+        public void AddListener<T>(object notNullInstance, string methodName = "", Type[] parameterTypes = null)
+        {
+            _ = notNullInstance ?? throw new ArgumentNullException(nameof(notNullInstance));
+            var code = TryGetEventCode(typeof(T))
+                ?? throw new InvalidOperationException($"{nameof(AddListener)} : Cannot add {(notNullInstance is null ? "Null" : notNullInstance)} object to an undefined EventCode : {typeof(T)}. Please define the code first.");
+            var objectType = notNullInstance.GetType();
+            if (GetTypeEOSMethods(objectType).TryGetValue(code, out var methodData))
+            {
+                var eosDelegate = GetEOSDelegate(code);
+                eosDelegate.Add(notNullInstance, methodData);
+                return;
+            }
+            parameterTypes ??= new Type[0];
+            var methodInfo = objectType.GetMethod(methodName, parameterTypes)
+                ?? throw new InvalidOperationException($"{nameof(AddListener)} : Cannot found method : {methodName} with parameters : {string.Join<Type>(",", parameterTypes)} in object type : {(notNullInstance is null ? "Null" : objectType)}.");
+            if (methodInfo.IsParamsAndReturnEquelsWith(code.Method))
+            {
+                methodData = new EOSMethodData(
+                    methodInfo: methodInfo,
+                    priority: 0
+                    );
+                //将新方法信息加入到字典中
+                if (ListenerTypeCodeMethods.TryGetValue(objectType, out var typeCodeMethods))
+                {
+                    typeCodeMethods.Add(code, methodData);
+                }
+                else
+                {
+                    typeCodeMethods = new Dictionary<EventCode, EOSMethodData>() { { code, methodData } };
+                    ListenerTypeCodeMethods.Add(objectType, typeCodeMethods);
+                }
+                var eosDelegate = GetEOSDelegate(code);
+                eosDelegate.Add(notNullInstance, methodData);
+            }
+            else
+            {
+                throw new InvalidOperationException($"{nameof(AddNewTypeCodeData)} : Input {nameof(methodInfo)} {methodInfo} is not equel with EventCode method.");
+            }
+        }
+
+
         /// <summary>移除事件的接收者，或静态类中的方法。</summary>
         /// <param name="type">类型必须是继承了<see cref="EventListenerAttribute"/>特性的类型，否则会抛出<see cref="InvalidOperationException"/>异常。</param>
         /// <param name="instance">对象实例。如果为<see langword="null"/>，则类型必须是静态类型。</param>
@@ -299,12 +342,33 @@ namespace EOS
             }
         }
 
-        /// <inheritdoc cref=" RemoveListener(Type, object)"/>
+        /// <summary>移除事件的接收者。</summary>
         /// <param name="notNullInstance">对象实例，不能为空。</param>
+        /// <exception cref="ArgumentNullException"/>
+        /// <exception cref="InvalidOperationException"/>
         public void RemoveListener(object notNullInstance)
         {
             RemoveListener(notNullInstance?.GetType(), notNullInstance);
         }
+
+
+        /// <inheritdoc cref=" RemoveListener(object)"/>
+        /// <typeparam name="T">必须是使用或继承了<see cref="EventListenerAttribute"/>特性的类型。</typeparam>
+        /// <remarks>该方法用于在运行时，将实例的单个方法从以使用了<see cref="EventCodeAttribute"/>特性的<typeparamref name="T"/>类型作为<see cref="EventCode"/>的事件中移除（即动态解绑）。</remarks>
+        public void RemoveListener<T>(object notNullInstance)
+        {
+            _ = notNullInstance ?? throw new ArgumentNullException(nameof(notNullInstance));
+            var code = TryGetEventCode(typeof(T)) ?? throw new InvalidOperationException($"{nameof(AddListener)} : Cannot remove {(notNullInstance is null ? "Null" : notNullInstance)} object from an undefined EventCode : {typeof(T)}. Please define the code first.");
+            if (GetEOSDelegates().TryGetValue(code, out var eosDelegate))
+            {
+                eosDelegate.Remove(notNullInstance, GetTypeEOSMethods(notNullInstance.GetType())[code]);
+            }
+            else
+            {
+                throw new InvalidOperationException($"{nameof(RemoveListener)} : Cannot remove {(notNullInstance is null ? "Null" : notNullInstance)} object with an EventCode : {typeof(T)} that this object do not use yet.");
+            }
+        }
+
 
         /// <summary>
         /// 清空对应事件的事件码
@@ -381,7 +445,7 @@ namespace EOS
         /// 该数组对应<see langword="ref"/>关键字参数位置的索引的元素的值将被修改。</para>
         /// <para>对使用了<see langword="out"/>关键字的参数，参考<see langword="ref"/>关键字，
         /// 不同的是<see langword="out"/>关键字参数位置的元素，在输入时可以为<see langword="null"/>，它将在函数中被定义。</para>
-        /// <para>使用了<see langword="params"/>关键字的参数，请将<paramref name="values"/>中最后一个参数替换为<see langword="object[]"/>数组。</para>
+        /// <para>对使用了<see langword="params"/>关键字的参数，请将<paramref name="values"/>中最后一个参数替换为<see langword="object[]"/>数组。</para>
         /// </param>
         /// <exception cref="InvalidOperationException"/>
         /// <exception cref="NullReferenceException"/>
@@ -418,8 +482,8 @@ namespace EOS
             BroadCast(type.AssemblyQualifiedName, values);
         }
         /// <inheritdoc cref="BroadCast(Type, object[])"/>
-        /// <typeparam name="T">泛型必须是带有<see cref="IEventCode"/>接口的类，以确保可为<see cref="EventCode"/>。</typeparam>
-        public void BroadCast<T>(params object[] values) where T : IEventCode
+        /// <typeparam name="T">泛型必须是使用或继承了<see cref="EventCodeAttribute"/>的类型。</typeparam>
+        public void BroadCast<T>(params object[] values)
         {
             BroadCast(typeof(T).AssemblyQualifiedName, values);
         }
@@ -443,25 +507,17 @@ namespace EOS
             if (!IsDestroy)
             {
                 IsDestroy = true;
-                Task.Run(() =>
+                foreach (var controler in new List<EOSControler>(MergeControlers))
                 {
-                    while ((NowBroadCastParams?.BroadCastLevel ?? 0) > 0)
-                    {
-                        Task.Delay(15).Wait();
-                    }
-                    foreach (var controler in new List<EOSControler>(MergeControlers))
-                    {
-                        controler.Split(this);
-                    }
-                    MergeControlers.Clear();
-                    foreach (var eosDeleget in new List<EOSDelegate>(EventDelegatesDic.Values))
-                    {
-                        eosDeleget.Clear();
-                    }
-                    ListenerTypeCodeMethods.Clear();
-                    EOSManager.Instance.AssemblyControlerDic.Remove(ControlAssembly);
-                    ControlAssembly = null;
-                });
+                    controler.Split(this);
+                }
+                MergeControlers.Clear();
+                foreach (var eosDeleget in new List<EOSDelegate>(EventDelegatesDic.Values))
+                {
+                    eosDeleget.Clear();
+                }
+                ListenerTypeCodeMethods.Clear();
+                ControlAssembly = null;
             }
         }
 
@@ -539,67 +595,7 @@ namespace EOS
             return new Dictionary<EventCode, EOSMethodData>();
         }
 
-        /// <summary>加载对应类型的事件码对应的方法。</summary>
-        internal void SearchTypeCodeDataDic(Type type)
-        {
-            var codeDataDic = new Dictionary<EventCode, EOSMethodData>();
-            var methodInfos = type.GetNotGetSetMethods();
-            foreach (var method in methodInfos)
-            {
-                if (method.IsConstructorOrGeneric())
-                {
-                    continue;
-                }
-                if (method.GetCustomAttribute<EventListenerAttribute>(true, true) is EventListenerAttribute eventListener)
-                {
-                    if (eventListener.CodeType is null ||
-                        eventListener.CodeType.GetCustomAttribute<EventCodeAttribute>(true, true) is not EventCodeAttribute eventCodeAttribute)
-                    {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] has a method that define a no EventCode EventListenerAttribute, Method Name : {method.Name}");
-                        continue;
-                    }
-                    var code = TryGetEventCode(eventListener.CodeType);
-                    if (code is null)
-                    {
-                        //对未加载的类型，尝试加载并自动合并。
-                        var newControler = EOSManager.GetNewControler(eventListener.CodeType.Assembly, new List<EOSControler>() { this });
-                        code = TryGetEventCode(eventListener.CodeType);
-                        if (code is null)
-                        {
-                            TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use an undefined [EventCode : <{eventListener.CodeType}>].");
-                            continue;
-                        }
-                    }
-                    if (codeDataDic.ContainsKey(code))
-                    {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use multiple [EventCode : <{eventListener.CodeType}>]. " +
-                            $"There's already a method use this Code!");
-                        continue;
-                    }
-                    if (!method.IsParamsAndReturnEquelsWith(code.Method))
-                    {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] has different parameters or returnType with [EventCode : <{eventListener.CodeType}>]. " +
-                           $"Please maintain consistency!");
-                        continue;
-                    }
-                    var methodData = new EOSMethodData(
-                        methodInfo: method,
-                        priority: method.GetCustomAttribute<EventPriorityAttribute>(true, true)?.Priority ?? (int)Priority.Normal
-                        );
-                    codeDataDic.Add(code, methodData);
-                }
-            }
-            if (codeDataDic.Count > 0)
-            {
-                ListenerTypeCodeMethods.AddOrUpdata(type, codeDataDic);
-            }
-            //获取此类型中的嵌套类型并将其中的事件加入控制集
-            var nestedTypes = type.GetNestedTypes(true);
-            foreach (var nestedType in nestedTypes)
-            {
-                SearchTypeCodeDataDic(nestedType);
-            }
-        }
+        
 
 
 
@@ -609,7 +605,7 @@ namespace EOS
         {
             return type?.GetCustomAttribute<EventCodeAttribute>(true, true) is null ? null : TryGetEventCode(type.AssemblyQualifiedName);
         }
-        /// <summary>返回此<see cref="EOSControler"/>中可以找到的对应的<see cref="EventCode"/>实例。</summary>
+        /// <summary>返回此<see cref="EOSControler"/>中可以找到的对应的<see cref="EventCode"/>实例。包含此<see cref="EOSControler"/>中合并的那些<see cref="EOSControler"/>。</summary>
         /// <param name="key"></param>
         /// <returns>查询到的<see cref="EventCode"/>实例。如果未找到或输入为空，返回<see langword="null"/>。</returns>
         public EventCode TryGetEventCode(string key)

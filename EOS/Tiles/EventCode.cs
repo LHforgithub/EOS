@@ -24,7 +24,7 @@ namespace EOS.Tiles
         /// 仅需其中一边为非<see langword="null"/>。</para>
         /// </remarks>
         public MethodInfo Method { get; set; }
-        /// <summary>事件广播的方法定义的参数集合。</summary>
+        /// <summary>事件广播的方法定义的参数集合。列表顺序即为参数顺序。</summary>
         public List<ParameterInfo> Parameters { get; set; } = null;
         /// <summary>事件广播的方法定义的参数集合。用于动态创建<see cref="EventCode"/>的<see cref="Method"/></summary>
         public List<Type> ParametersType { get; set; } = null;

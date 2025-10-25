@@ -22,17 +22,8 @@ namespace EOS.Attributes
         /// </remarks>
         public EventListenerAttribute(Type type)
         {
-            if (CheckParameter(type))
-            {
-                CodeType = type;
-                return;
-            }
-            throw new ArgumentException($"{nameof(type)} can not use as an EventCode.");
-        }
-        internal bool CheckParameter(Type type)
-        {
-            //TODO 声明的事件与标注的方法的参数合法性判断
-            return true;
+            CodeType = type;
+            return;
         }
     }
 }

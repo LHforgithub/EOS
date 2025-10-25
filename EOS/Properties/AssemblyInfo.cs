@@ -1,15 +1,15 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 // 有关程序集的一般信息由以下
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("EOS")]
-[assembly: AssemblyDescription("A EventSystem To Implant In Any Dll.")]
+[assembly: AssemblyDescription("A EventSystem To Implant In Any CSharp Dll.")]
 [assembly: AssemblyConfiguration("Release")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Type 29")]
 [assembly: AssemblyProduct("EOS")]
-[assembly: AssemblyCopyright("Copyright ©  2024")]
+[assembly: AssemblyCopyright("Copyright © Type 29 2024-2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -28,5 +28,5 @@ using System.Runtime.InteropServices;
 //      生成号
 //      修订号
 //
-[assembly: AssemblyVersion("1.1.0.2")]
-[assembly: AssemblyFileVersion("1.1.0.2")]
+[assembly: AssemblyVersion("1.3.6.4")]
+[assembly: AssemblyFileVersion("1.3.6.4")]

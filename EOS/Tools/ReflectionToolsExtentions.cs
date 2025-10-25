@@ -4,7 +4,7 @@ using System.Reflection;
 namespace EOS.Tools
 {
     /// <summary>用于查找反射的工具方法合集。以拓展方式使用。</summary>
-    public static class ReflectionToolsExtensions
+    internal static class ReflectionToolsExtensions
     {
         /// <inheritdoc cref="ReflectionTools.GetSuccessfullyLoadedTypes(Assembly)"/>
         public static Type[] GetSuccessfullyLoadedTypes(this Assembly assembly) => ReflectionTools.GetSuccessfullyLoadedTypes(assembly);

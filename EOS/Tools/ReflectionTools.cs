@@ -5,7 +5,7 @@ using System.Reflection;
 namespace EOS.Tools
 {
     /// <summary>用于查找反射的工具方法合集。</summary>
-    public static class ReflectionTools
+    internal static class ReflectionTools
     {
         /// <summary>所有检索类型</summary>
         public static readonly BindingFlags All = BindingFlags.Public
