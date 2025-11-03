@@ -1,4 +1,4 @@
-using EOS.Attributes;
+﻿using EOS.Attributes;
 using EOS.Tiles;
 using EOS.Tools;
 using System;
@@ -157,7 +157,7 @@ namespace EOS
             return GetNewControler(assembly, mergeConrolers);
         }
 
-        /// <summary>加载对应类型的事件码对应的方法。</summary>
+        /// <summary>加载对应类型的每个声明的事件码对应的事件方法。</summary>
         internal static void SearchTypeCodeDataDic(EOSControler eosControler, Type type)
         {
             var codeDataDic = new Dictionary<EventCode, EOSMethodData>();

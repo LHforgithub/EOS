@@ -1,4 +1,4 @@
-﻿using EOS.Tiles;
+using EOS.Tiles;
 using System;
 using System.Reflection;
 namespace EOS.Attributes

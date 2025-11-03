@@ -278,17 +278,23 @@ namespace EOS
         /// <param name="notNullInstance">对象实例，不能为空。</param>
         /// <param name="methodName">方法名，在对象实例已存在对应于<typeparamref name="T"/>的事件方法（即定义了<see cref="EventListenerAttribute"/>特性，参数为<see langword="typeof(T)"/>的方法）的情况下，该项可以为空。</param>
         /// <param name="parameterTypes">方法重载的参数类型。</param>
-        /// <remarks>该方法用于在运行时，将实例的单个方法添加至以使用了<see cref="EventCodeAttribute"/>特性的<typeparamref name="T"/>类型作为<see cref="EventCode"/>的事件中，而不是一次性将该类型的所有事件方法添加至事件中（即动态绑定）。</remarks>
+        /// <remarks>该方法用于在运行时，将实例的单个方法添加至以使用了<see cref="EventCodeAttribute"/>特性的<typeparamref name="T"/>类型作为<see cref="EventCode"/>的事件中，而不是一次性将该类型的所有事件方法添加至事件中。
+        /// <para>即，使用此方法进行动态绑定。</para>
+        /// 在要绑定的对象<paramref name="notNullInstance"/>中，已存在对应于<typeparamref name="T"/>的事件方法的情况下，不填入方法名时，会自动获取该类中对应的事件方法。<paramref name="methodName"/>不为空的情况下，会优先获取该方法名的方法注入事件。
+        /// </remarks>
         public void AddListener<T>(object notNullInstance, string methodName = "", Type[] parameterTypes = null)
         {
             _ = notNullInstance ?? throw new ArgumentNullException(nameof(notNullInstance));
             var code = TryGetEventCode(typeof(T))
                 ?? throw new InvalidOperationException($"{nameof(AddListener)} : Cannot add {(notNullInstance is null ? "Null" : notNullInstance)} object to an undefined EventCode : {typeof(T)}. Please define the code first.");
             var objectType = notNullInstance.GetType();
-            if (GetTypeEOSMethods(objectType).TryGetValue(code, out var methodData))
+            if (string.IsNullOrWhiteSpace(methodName))
             {
-                var eosDelegate = GetEOSDelegate(code);
-                eosDelegate.Add(notNullInstance, methodData);
+                if (GetTypeEOSMethods(objectType).TryGetValue(code, out var methodData))
+                {
+                    var eosDelegate = GetEOSDelegate(code);
+                    eosDelegate.Add(notNullInstance, methodData);
+                }
                 return;
             }
             parameterTypes ??= new Type[0];
@@ -296,7 +302,7 @@ namespace EOS
                 ?? throw new InvalidOperationException($"{nameof(AddListener)} : Cannot found method : {methodName} with parameters : {string.Join<Type>(",", parameterTypes)} in object type : {(notNullInstance is null ? "Null" : objectType)}.");
             if (methodInfo.IsParamsAndReturnEquelsWith(code.Method))
             {
-                methodData = new EOSMethodData(
+                var methodData = new EOSMethodData(
                     methodInfo: methodInfo,
                     priority: 0
                     );
