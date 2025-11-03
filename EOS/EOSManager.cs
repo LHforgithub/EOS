@@ -17,15 +17,15 @@ namespace EOS
         public Singleton()
         {
         }
-        public static T Instance { get => Nested.instance; }
-        private class Nested
+        public static T Instance  => Nested.instance;
+        public static bool IsInitialized => Nested.instance != null;
+        class Nested
         {
             static Nested()
             {
             }
             internal static readonly T instance = new();
         }
-        public static bool IsInitialized { get => Nested.instance != null; }
     }
 #pragma warning restore CS1591 // 缺少对公共可见类型或成员的 XML 注释
     #endregion
