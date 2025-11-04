@@ -1,4 +1,4 @@
-﻿using EOS.Attributes;
+using EOS.Attributes;
 using EOS.Tiles;
 using EOS.Tools;
 using System;
@@ -365,7 +365,10 @@ namespace EOS
 
 
         /// <inheritdoc cref="EOSControler.SetListenerLayerProperty(int, Type, object)"/>
-        /// <remarks>此方法在<see cref="EOSManager"/>中的<see cref="SingleControler"/>中设置层级优先级。</remarks>
+        /// <remarks>
+        /// 此方法在<see cref="EOSManager"/>中的<see cref="SingleControler"/>中设置层级优先级。
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
+        /// </remarks>
         public void SetListenerLayerProperty(int layerProperty, Type type, object instance = null)
         {
             try
@@ -388,7 +391,7 @@ namespace EOS
         /// <inheritdoc cref="EOSControler.BroadCast(string, object[])" path="member/param"/>
         /// <remarks>
         /// 此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>广播事件。
-        /// <para>此静态方法不会抛出异常。</para>
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
         /// </remarks>
         public static void BroadCast(string key, params object[] values)
         {
@@ -405,7 +408,7 @@ namespace EOS
         /// <inheritdoc cref="EOSControler.BroadCast(Type, object[])" path="member/param"/>
         /// <remarks>
         /// 此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>广播事件。
-        /// <para>此静态方法不会抛出异常。</para>
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
         /// </remarks>
         public static void BroadCast(Type type, params object[] values)
         {
@@ -423,7 +426,7 @@ namespace EOS
         /// <inheritdoc cref="EOSControler.BroadCast{T}(object[])" path="member/typeparam"/>
         /// <remarks>
         /// 此方法从<see cref="EOSManager"/>中的<see cref="SingleControler"/>广播事件。
-        /// <para>此静态方法不会抛出异常。</para>
+        /// <para>此静态方法不会直接抛出异常中断，而是将出现的异常记录至<see cref="TempLog"/>中。</para>
         /// </remarks>
         public static void BroadCast<T>(params object[] values)
         {

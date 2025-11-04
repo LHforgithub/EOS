@@ -1,4 +1,4 @@
-﻿using EOS.Tools;
+using EOS.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,28 +19,35 @@ namespace EOS.Tiles
         private Dictionary<object, EOSMethod> InstanceDelegateQueue = new Dictionary<object, EOSMethod>();
         public void Add(object instance, EOSMethodData methodFrom)
         {
-            var eosMethod = new EOSMethod();
-            eosMethod.Data = methodFrom;
-            eosMethod.TargetObject = instance;
             if (instance is null)
             {
                 if (!methodFrom.IsStatic)
                 {
                     throw new InvalidOperationException($"[{nameof(Add)}] : Argument{nameof(instance)} is null, and there's no static method to call. Need instance object.");
                 }
-                InstanceDelegateQueue.AddOrUpdata(methodFrom.Method.ReflectedType, eosMethod);
+                InstanceDelegateQueue.AddOrUpdata(methodFrom.Method.ReflectedType, new EOSMethod() { Data = methodFrom });
                 return;
             }
+            var eosMethod = new EOSMethod
+            {
+                Data = methodFrom,
+                TargetObject = instance
+            };
             InstanceDelegateQueue.AddOrUpdata(instance, eosMethod);
         }
         public void Remove(object instance, EOSMethodData methodFrom)
         {
             if (instance is null)
             {
-                InstanceDelegateQueue.Remove(methodFrom.Method.ReflectedType);
+                if(InstanceDelegateQueue.TryGetValue(methodFrom.Method.ReflectedType, out var eosMethod))
+                {
+                    eosMethod.TargetObject = null;
+                    InstanceDelegateQueue.Remove(methodFrom.Method.ReflectedType);
+                }
             }
-            else
+            else if (InstanceDelegateQueue.TryGetValue(instance, out var eosMethod))
             {
+                eosMethod.TargetObject = instance;
                 InstanceDelegateQueue.Remove(instance);
             }
         }
@@ -82,6 +89,10 @@ namespace EOS.Tiles
         }
         public void Clear()
         {
+            foreach (var keyValuePair in InstanceDelegateQueue)
+            {
+                keyValuePair.Value.TargetObject = null;
+            }
             InstanceDelegateQueue.Clear();
         }
     }

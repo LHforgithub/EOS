@@ -461,20 +461,10 @@ namespace EOS
             //声明新一层事件参数
             var eventParams = new EventParams(this, eosDelegate.Code, NowBroadCastParams, NowBroadCastParams?.BroadCastLevel ?? 0 + 1, values);
             NowBroadCastParams = eventParams;
-            try
-            {
-                //调用
-                eosDelegate.Invoke(values);
-            }
-            catch (Exception ex)
-            {
-                TempLog.Log($"{nameof(BroadCast)} : {ex.GetBaseException()}");
-            }
-            finally
-            {
-                //回到上一层事件参数
-                NowBroadCastParams = eventParams?.Last;
-            }
+            //调用
+            eosDelegate.Invoke(values);
+            //回到上一层事件参数
+            NowBroadCastParams = eventParams?.Last;
         }
 
         /// <inheritdoc cref="BroadCast(string, object[])"/>
