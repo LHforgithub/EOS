@@ -217,5 +217,4 @@ public class TestClass
 
 必须继承该接口才能将类型作为[EOSManager](#eosmanager)或[EOSControler](#eoscontroler)中[EventListener](#eventlistenerattribute)相关方法的泛型参数。
 
-
 ***
