@@ -35,7 +35,7 @@ namespace EOS
         /// </summary>
         /// <param name="eventCode">事件信息</param>
         /// <exception cref="ArgumentException"/>
-        public void AddNewCode(EventCode eventCode)
+        internal void AddNewCode(EventCode eventCode)
         {
             if (string.IsNullOrEmpty(eventCode.Key))
             {
@@ -86,7 +86,7 @@ namespace EOS
         }
         /// <inheritdoc cref="AddNewCode(Type)"/>
         /// <typeparam name="T">泛型必须为继承了<see cref="IEventCode"/>接口的类型，或使用了<see cref="EventCodeAttribute"/>特性的类型的类型。</typeparam>
-        public void AddNewCode<T>()
+        internal void AddNewCode<T>()
         {
             AddNewCode(typeof(T));
         }
@@ -98,10 +98,10 @@ namespace EOS
         /// </remarks>
         /// <exception cref="ArgumentNullException"/>
         /// <exception cref="InvalidOperationException"/>
-        public void AddNewCode(Type type)
+        internal void AddNewCode(Type type)
         {
             _ = type ?? throw new ArgumentNullException(nameof(type));
-            if (type.GetCustomAttribute<EventCodeAttribute>(true, true) is null)
+            if (!type.IsCanUseAsEventCode())
             {
                 throw new InvalidOperationException($"{nameof(AddNewCode)} : Type : {type} has not use an EventCodeAttribute.");
             }
@@ -248,12 +248,15 @@ namespace EOS
         public void AddListener(Type type, object instance = null)
         {
             _ = type ?? throw new ArgumentNullException(nameof(type));
-            _ = type.GetCustomAttribute<EventListenerAttribute>(true, true) ??
-                throw new InvalidOperationException($"{nameof(AddListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
+            if(!type.IsListener()) throw new InvalidOperationException($"{nameof(AddListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
             var codeMethodDic = GetTypeEOSMethods(type);
             if (codeMethodDic.Count < 1)
             {
                 throw new InvalidOperationException($"{nameof(AddListener)} : Cannot use {(instance is null ? "Null" : instance)} with Type : {type} as an Event Listener. No method can be use as a delegate. Please cheak your class's EventListener attribute.");
+            }
+            if (instance != null && instance.GetType() != type)
+            {
+                throw new InvalidOperationException($"{nameof(AddListener)} : Mismatch Type and Instance. Object Type : {instance.GetType()} does not match the enter Type : {type}");
             }
             var eosDelegateDic = GetEOSDelegates();
             foreach (var code in codeMethodDic.Keys)
@@ -282,12 +285,15 @@ namespace EOS
         /// <para>即，使用此方法进行动态绑定。</para>
         /// 在要绑定的对象<paramref name="notNullInstance"/>中，已存在对应于<typeparamref name="T"/>的事件方法的情况下，不填入方法名时，会自动获取该类中对应的事件方法。<paramref name="methodName"/>不为空的情况下，会优先获取该方法名的方法注入事件。
         /// </remarks>
+        /// <exception cref="AmbiguousMatchException" />
+        /// <exception cref="ArgumentException" />
         public void AddListener<T>(object notNullInstance, string methodName = "", Type[] parameterTypes = null)
         {
             _ = notNullInstance ?? throw new ArgumentNullException(nameof(notNullInstance));
             var code = TryGetEventCode(typeof(T))
                 ?? throw new InvalidOperationException($"{nameof(AddListener)} : Cannot add {(notNullInstance is null ? "Null" : notNullInstance)} object to an undefined EventCode : {typeof(T)}. Please define the code first.");
             var objectType = notNullInstance.GetType();
+            if(!objectType.IsListener()) throw new InvalidOperationException($"{nameof(AddListener)} : Type : {objectType} has no EventListener attribute, cannot use as an Event Listener.");
             if (string.IsNullOrWhiteSpace(methodName))
             {
                 if (GetTypeEOSMethods(objectType).TryGetValue(code, out var methodData))
@@ -334,8 +340,7 @@ namespace EOS
         public void RemoveListener(Type type, object instance = null)
         {
             _ = type ?? throw new ArgumentNullException(nameof(type));
-            _ = type.GetCustomAttribute<EventListenerAttribute>(true, true) ??
-                throw new InvalidOperationException($"{nameof(RemoveListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
+            if(!type.IsListener()) throw new InvalidOperationException($"{nameof(RemoveListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
             var codeMethodDic = GetTypeEOSMethods(type);
             var delegateDic = GetEOSDelegates();
             foreach (var code in codeMethodDic.Keys)
@@ -365,6 +370,7 @@ namespace EOS
         {
             _ = notNullInstance ?? throw new ArgumentNullException(nameof(notNullInstance));
             var code = TryGetEventCode(typeof(T)) ?? throw new InvalidOperationException($"{nameof(AddListener)} : Cannot remove {(notNullInstance is null ? "Null" : notNullInstance)} object from an undefined EventCode : {typeof(T)}. Please define the code first.");
+            if(!notNullInstance.GetType().IsListener()) throw new InvalidOperationException($"{nameof(AddListener)} : Type : {notNullInstance.GetType()} has no EventListener attribute, cannot use as an Event Listener.");
             if (GetEOSDelegates().TryGetValue(code, out var eosDelegate))
             {
                 eosDelegate.Remove(notNullInstance, GetTypeEOSMethods(notNullInstance.GetType())[code]);
@@ -417,8 +423,7 @@ namespace EOS
         public void SetListenerLayerProperty(int layerProperty, Type type, object instance = null)
         {
             _ = type ?? throw new ArgumentNullException(nameof(type));
-            _ = type.GetCustomAttribute<EventListenerAttribute>(true, true) ??
-                throw new InvalidOperationException($"{nameof(RemoveListener)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
+            if(!type.IsListener()) throw new InvalidOperationException($"{nameof(SetListenerLayerProperty)} : Type : {type} has no EventListener attribute, cannot use as an Event Listener.");
             var codeMethodDic = GetTypeEOSMethods(type);
             var delegateDic = GetEOSDelegates();
             foreach (var code in codeMethodDic.Keys)
@@ -474,7 +479,7 @@ namespace EOS
         public void BroadCast(Type type, params object[] values)
         {
             _ = type ?? throw new ArgumentNullException(nameof(type));
-            _ = type.GetCustomAttribute<EventCodeAttribute>(true, true) ?? throw new ArgumentException();
+            if(!type.IsCanUseAsEventCode()) throw new ArgumentException();
             BroadCast(type.AssemblyQualifiedName, values);
         }
         /// <inheritdoc cref="BroadCast(Type, object[])"/>
@@ -599,7 +604,7 @@ namespace EOS
         /// <param name="type">继承了<see cref="EventCodeAttribute"/>特性的类型。</param>
         public EventCode TryGetEventCode(Type type)
         {
-            return type?.GetCustomAttribute<EventCodeAttribute>(true, true) is null ? null : TryGetEventCode(type.AssemblyQualifiedName);
+            return type?.IsCanUseAsEventCode() ?? false ? TryGetEventCode(type.AssemblyQualifiedName) : null;
         }
         /// <summary>返回此<see cref="EOSControler"/>中可以找到的对应的<see cref="EventCode"/>实例。包含此<see cref="EOSControler"/>中合并的那些<see cref="EOSControler"/>。</summary>
         /// <param name="key"></param>

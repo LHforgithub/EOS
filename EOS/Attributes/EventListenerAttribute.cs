@@ -1,10 +1,10 @@
-﻿using EOS.Tiles;
+using EOS.Tiles;
 using System;
 using System.Reflection;
 namespace EOS.Attributes
 {
     /// <summary>事件特性</summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public sealed class EventListenerAttribute : Attribute
     {
         internal Type CodeType { get; set; }

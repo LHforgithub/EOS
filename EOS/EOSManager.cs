@@ -129,7 +129,7 @@ namespace EOS
             //所有类型获取
             var AllTypes = assembly.GetSuccessfullyLoadedTypes();
             //所有事件码获取
-            var eventCodeList = AllTypes.Where(t => IsCanUseAsEventCode(t));
+            var eventCodeList = AllTypes.Where(t => t.IsCanUseAsEventCode());
             foreach (var type in eventCodeList)
             {
                 try
@@ -143,7 +143,7 @@ namespace EOS
                 }
             }
             //所有许可类型获取
-            var listenerTypeList = AllTypes.Where(t => IsListener(t));
+            var listenerTypeList = AllTypes.Where(t => t.IsListener());
             foreach (var type in listenerTypeList)
             {
                 SearchTypeCodeDataDic(eosControler, type);
@@ -157,23 +157,24 @@ namespace EOS
             return GetNewControler(assembly, mergeConrolers);
         }
 
-        /// <summary>加载对应类型的每个声明的事件码对应的事件方法。</summary>
+        /// <summary>
+        /// 加载对应类型的每个声明的事件码对应的事件方法。
+        /// </summary>
         internal static void SearchTypeCodeDataDic(EOSControler eosControler, Type type)
         {
             var codeDataDic = new Dictionary<EventCode, EOSMethodData>();
             var methodInfos = type.GetNotGetSetMethods();
             foreach (var method in methodInfos)
             {
-                if (method.IsConstructorOrGeneric())
+                if (method.IsConstructor || method.IsGenericMethod)
                 {
                     continue;
                 }
-                if (method.GetCustomAttribute<EventListenerAttribute>(true, true) is EventListenerAttribute eventListener)
+                if (method.GetCustomAttribute<EventListenerAttribute>(false, false) is EventListenerAttribute eventListener)
                 {
-                    if (eventListener.CodeType is null ||
-                        eventListener.CodeType.GetCustomAttribute<EventCodeAttribute>(true, true) is not EventCodeAttribute eventCodeAttribute)
+                    if (eventListener.CodeType is null || !eventListener.CodeType.IsCanUseAsEventCode())
                     {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] has a method that define a no EventCode EventListenerAttribute, Method Name : {method.Name}");
+                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] has a method that define an Empty or Error EventCode EventListenerAttribute, Method Name : {method.Name}");
                         continue;
                     }
                     var code = eosControler.TryGetEventCode(eventListener.CodeType);
@@ -196,8 +197,8 @@ namespace EOS
                     }
                     if (codeDataDic.ContainsKey(code))
                     {
-                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] with [Method : <{method.Name}>] use multiple [EventCode : <{eventListener.CodeType}>]. " +
-                            $"There's already a method use this Code!");
+                        TempLog.Log($"{nameof(SearchTypeCodeDataDic)} : [Type : <{type}>] use multiple [EventCode : <{eventListener.CodeType}>] with [Method : <{method.Name}>]. " +
+                            $"There's already another method of this type used this Code!");
                         continue;
                     }
                     if (!method.IsParamsAndReturnEquelsWith(code.Method))
@@ -208,7 +209,7 @@ namespace EOS
                     }
                     var methodData = new EOSMethodData(
                         methodInfo: method,
-                        priority: method.GetCustomAttribute<EventPriorityAttribute>(true, true)?.Priority ?? (int)Priority.Normal
+                        priority: method.GetCustomAttribute<EventPriorityAttribute>(false, false)?.Priority ?? (int)Priority.Normal
                         );
                     codeDataDic.Add(code, methodData);
                 }
@@ -458,19 +459,6 @@ namespace EOS
 
 
 
-        /// <summary>检查类型是否可以被视为定义了一个<see cref="EventCode"/>实例。</summary>
-        public static bool IsCanUseAsEventCode(Type type)
-        {
-            return (type?.GetCustomAttribute<EventCodeAttribute>(false, false) is not null
-                || type?.GetInterface(nameof(IEventCode)) is not null)
-                && type.GetCustomAttribute<NoEventCodeClassAttribute>(true, true) is null;
-        }
-        /// <summary>检查类型是否可以作为事件的接收者。</summary>
-        public static bool IsListener(Type type)
-        {
-            return type?.GetCustomAttribute<EventListenerAttribute>(true, true) is not null
-                && type.IsClass && !type.IsAbstract && !type.IsGenericType && type.IsVisible;
-        }
 
 
         //internal

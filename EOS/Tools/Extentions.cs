@@ -1,4 +1,6 @@
-﻿using System;
+using EOS.Attributes;
+using EOS.Tiles;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,6 +12,21 @@ namespace EOS.Tools
     /// </summary>
     internal static class Extentions
     {
+
+        /// <summary>检查类型是否可以被视为定义了一个<see cref="EventCode"/>实例。</summary>
+        public static bool IsCanUseAsEventCode(this Type type)
+        {
+            return (type?.GetCustomAttribute<EventCodeAttribute>(false, false) is not null
+                || type?.GetInterface(nameof(IEventCode)) is not null)
+                && type.GetCustomAttribute<NoEventCodeClassAttribute>(true, true) is null
+                && !type.IsGenericType;
+        }
+        /// <summary>检查类型是否可以作为事件的接收者。</summary>
+        public static bool IsListener(this Type type)
+        {
+            return type?.GetCustomAttribute<EventListenerAttribute>(true, true) is not null
+                && type.IsClass && !type.IsAbstract && !type.IsGenericType && type.IsVisible;
+        }
         /// <summary>
         /// 转换enum对象至int
         /// </summary>

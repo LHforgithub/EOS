@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 
 namespace EOS.Attributes
 {
     /// <summary> 用于标识事件委托在队列中的优先级。数值越大，优先级越高，越先被调用。</summary>
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public sealed class EventPriorityAttribute : Attribute
     {
         /// <summary> 创建优先等级。默认使用Normal等级。 </summary>
