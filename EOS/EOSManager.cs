@@ -12,19 +12,31 @@ namespace EOS
 
     #region
 #pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
-    public abstract class Singleton<T> : object where T : Singleton<T>, new()
+    public abstract class Singleton<T> where T : Singleton<T>
     {
-        public Singleton()
-        {
-        }
-        public static T Instance  => Nested.instance;
-        public static bool IsInitialized => Nested.instance != null;
+        protected Singleton() { }
+        public static T Instance => Nested.Instance;        public static bool IsInitiate => Nested.Instance != default;
         class Nested
         {
-            static Nested()
+            static Nested() { }
+            static readonly object initLock = new();
+            internal static T Instance
             {
+                get
+                {
+                    if (_instance == null)
+                    {
+                        lock (initLock)
+                        {
+                            _instance ??= (T)Activator.CreateInstance(typeof(T),
+                                    bindingAttr: BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                                    null, null, null);
+                        }
+                    }
+                    return _instance;
+                }
             }
-            internal static readonly T instance = new();
+            internal static T _instance;
         }
     }
 #pragma warning restore CS1591 // 缺少对公共可见类型或成员的 XML 注释
@@ -34,8 +46,9 @@ namespace EOS
     /// <summary>
     /// 
     /// </summary>
-    public class EOSManager : Singleton<EOSManager>
+    public sealed class EOSManager : Singleton<EOSManager>
     {
+        protected EOSManager() : base() { }
         /// <summary></summary>
         public EOSControler SingleControler { get; internal set; }
         /// <summary></summary>
